@@ -1,7 +1,7 @@
 export type Context = {
-  quote_id: string;
-  content: string;
-  chapter: string;
+  paragraph_id: string;
+  paragraph_text: string;
+  chapter_name: string;
   similarity: string;
   book_name: string;
   author: string;

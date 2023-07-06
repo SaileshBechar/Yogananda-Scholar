@@ -1,5 +1,5 @@
 import { Component, For } from "solid-js";
-import { Context } from "./Chat";
+import { Context } from "~/types";
 
 const ChatContextCollapse: Component<{ context: Context[] }> = (props) => {
   return (
@@ -12,9 +12,9 @@ const ChatContextCollapse: Component<{ context: Context[] }> = (props) => {
         <For each={props.context}>
           {(item) => (
             <div class="p-10 rounded-lg my-4 bg-secondary text-secondary-content">
-              <div>{item.content}</div>
+              <div>{item.paragraph_text}</div>
               <div class="inline-flex justify-between gap-4 mt-4 w-full">
-                <div>{item.chapter.toLowerCase()},</div>
+                <div>{item.chapter_name.toLowerCase()},</div>
                 <div>
                   <span>{item.book_name}, </span>
                   <span>{item.author}</span>

@@ -22,48 +22,6 @@ export const Chat: Component<{}> = () => {
   let inputRef: HTMLInputElement | undefined;
   let chatboxRef: HTMLDivElement | undefined;
 
-  async function postData(url: string, data: object): Promise<Response> {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    return response;
-  }
-
-  createEffect(async () => {
-    // eventSource().onmessage = (event) => {
-    //   let completion = (event.data as string).slice(1, -1);
-    //   // completion = String.raw`${completion}`
-    //   if (completion === `[DONE]`) {
-    //     setIsCompleting(false);
-    //     eventSource().close();
-    //   } else if (conversation().slice(-1)[0].role === "human") {
-    //     setConversation((prev) => [
-    //       ...prev,
-    //       { content: "", role: "ai" },
-    //     ]);
-    //     setIsCompleting(true);
-    //     setIsWaitingForCompletion(false);
-    //   } else {
-    //     completion = decodeUnicode(completion);
-    //     completion = completion.replaceAll("\\\\", "\\");
-    //     completion = completion.replaceAll("\\n", " ");
-    //     setConversation((prev) => [
-    //       ...prev.slice(0, -1),
-    //       {
-    //         content: prev.slice(-1)[0].content + completion,
-    //         role: "ai",
-    //       },
-    //     ]);
-    //     console.log(conversation().slice(1));
-    //   }
-    // };
-  });
-
   createEffect(
     on(conversation, () => {
       if (chatboxRef) chatboxRef.scrollTop = chatboxRef?.scrollHeight;
@@ -125,7 +83,7 @@ export const Chat: Component<{}> = () => {
         { content: inputRef?.value as string, role: "human" },
       ]);
 
-      const url = "http://localhost:3000/api/stream_response";
+      const url = import.meta.env.VITE_BASE_URL + "/api/stream_response";
       const data = {
         conversation: conversation(),
       };
@@ -185,18 +143,18 @@ export const Chat: Component<{}> = () => {
           }}
         />
         <button
-          class="btn btn-secondary w-16 p-2 absolute right-0"
+          class="btn btn-primary w-16 p-2 absolute right-0"
           onClick={handleUserInput}
           disabled={isCompleting()}
         >
           <FiSearch size={20} />
         </button>
-        <button
+        {/* <button
           class="btn btn-primary hidden sm:inline-flex absolute -right-20"
           onClick={clearChat}
         >
           <HiOutlineTrash size={20} />
-        </button>
+        </button> */}
       </div>
     </>
   );

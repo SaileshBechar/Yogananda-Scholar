@@ -8,17 +8,59 @@ import { ChatOpenAI } from "langchain/chat_models/openai";
 import { ChatPromptTemplate, SystemMessagePromptTemplate } from "langchain/prompts";
 const embeddings = new OpenAIEmbeddings();
 
-const insert_book = async (supabase : SupabaseClient<any, "public", any>, bookName : string) => {
+const insert_book = async (supabase : SupabaseClient<any, "public", any>, book_name : string) => {
   const { data, error } = await supabase
     .from("books")
     .insert({
-      name: bookName,
+      book_name,
       language: "English",
       author: "Paramahansa Yogananda",
     })
     .select();
     if (data) {
       return data[0].book_id
+    }
+    return error
+}
+
+const insert_chapter = async (supabase : SupabaseClient<any, "public", any>, chapter_name : string, book_id : string) => {
+  const { data, error } = await supabase
+    .from("chapters")
+    .insert({
+      chapter_name,
+      book_id
+    })
+    .select();
+    if (data) {
+      return data[0].chapter_id
+    }
+    return error
+}
+
+const insert_paragraph = async (supabase : SupabaseClient<any, "public", any>, chapter_id : string, paragraph_text : string) => {
+  const { data, error } = await supabase
+    .from("paragraphs")
+    .insert({
+      chapter_id,
+      paragraph_text
+    })
+    .select();
+    if (data) {
+      return data[0].paragraph_id
+    }
+    return error
+}
+
+const insert_line = async (supabase : SupabaseClient<any, "public", any>, paragraph_id : string, embedding : number[]) => {
+  const { data, error } = await supabase
+    .from("lines")
+    .insert({
+      paragraph_id,
+      embedding
+    })
+    .select();
+    if (data) {
+      return data[0].line_id
     }
     return error
 }
@@ -30,67 +72,62 @@ export async function store_epub() {
   const bookName = "Autobiography of a Yogi";
   const docs = await loader.load();
   
-
   console.log("Storing", bookName)
-  const book_id = await insert_book(supabase, bookName)
+  const bookId = await insert_book(supabase, bookName)
+  
+  let paragraphCount = 0
+  let lineCount = 0
   for (let doc of docs) {
-    const text_splits = doc.pageContent.split("\n\n");
-    const chapter = text_splits.splice(0, 1)
+    const paragraphSplits = doc.pageContent.split("\n\n");
+    const chapter = paragraphSplits.splice(0, 2).join(" ").replace(/\[[^\]]+\]/g, "")
+    const chapterId = await insert_chapter(supabase, chapter, bookId)
     console.log("Embedding", doc.metadata["chapter"], chapter)
-    for (let split of text_splits) {
-      const trimmedText = split.trim().replace(/^\n+|\n+$/g, "");
-      if (trimmedText) {
-        const embedding = await embeddings.embedQuery(trimmedText);
-        const { error } = await supabase.from("quotes").insert({
-          book_id,
-          content: trimmedText,
-          chapter: chapter[0],
-          embedding
-        });
+    for (let paragraph of paragraphSplits) {
+      const pattern = /(?<=\D)(?<!January |February |March |April |May |June |July |August |September |October |November |December )\d{1,2}\b|(?<=^)\d{1,2}\s|^\n+|\n+$|\[[^\]]+\]/g
+      const trimmedParagraph = paragraph.trim().replace(pattern, "");
+      const paragraphId = await insert_paragraph(supabase, chapterId, trimmedParagraph)
+      const lineSplits = trimmedParagraph.split(/[.!?\n]/);
+      paragraphCount++
+      if (trimmedParagraph) {
+        const filteredlineSplits = lineSplits.filter(sentence => sentence.trim() !== "");
+        for (let line in filteredlineSplits) {
+          lineCount++  
+          const embedding = await embeddings.embedQuery(line);
+          insert_line(supabase, paragraphId, embedding)
+        }
       }
     }
   }
-
+  
   console.log("Storing complete!")
-  return
+  return {line_count: lineCount, paragraph_count: paragraphCount}
 }
 
-const remove_numbers_from_context = (data : [{}]) => {
-  return data.map((obj : any) => {
-    // const month_pattern = /(?<=\D)(?<!January |February |March |April |May |June |July |August |September |October |November |December )\d{1,2}\b/
-    // const start_string_pattern = /(?<=^)\d{1,2}\s\b/g
-    const pattern = /(?<=\D)(?<!January |February |March |April |May |June |July |August |September |October |November |December )\d{1,2}\b|(?<=^)\d{1,2}\s/g
-    return {
-      ...obj,
-      content: obj['content'].replace(pattern, "")
-    };
-  });
-}
 export async function retrieve_texts(query : string) {
   const queryEmbedding = await embeddings.embedQuery(query);
 
   const supabase = createSupabaseClient();
-  const { data, error } = await supabase.rpc('match_documents', {query_embedding : queryEmbedding, match_count : 10})
-  const sanitizedContext = remove_numbers_from_context(data)
+  const { data, error } = await supabase.rpc('match_documents', {query_embedding : queryEmbedding, match_count : 5})
+  if (error) console.log(error)
 
-  return sanitizedContext
+  return data
 }
 
 export const trimContext = (context : Context[]) => {
   let total_chars = 0
-  const MAX_CHARS = 3500 * 4
+  const MAX_CHARS = 3000 * 4
   const trimmed_context = context.map((obj : Context) => {
-    total_chars += obj['content'].length
+    total_chars += obj['paragraph_text'].length
     if (total_chars < MAX_CHARS) {
       return {
         ...obj,
-        content: obj['content']
+        content: obj['paragraph_text']
       };
     } else {
       return
     }
   })
-  console.log("Total chars", total_chars)
+  console.log("Total chars", total_chars, " tokens:, ", total_chars / 4)
   return trimmed_context
 }
 
