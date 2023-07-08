@@ -117,9 +117,11 @@ export const Chat: Component<{}> = () => {
                 <div class="chat chat-start">
                   <div class="chat-bubble mt-10 flex flex-col gap-4 bg-secondary text-secondary-content">
                     {bubble.content}
-                    <ChatContextCollapse
-                      context={contextHistory()[(index() - 1) / 2]}
-                    />
+                    <Show when={contextHistory()[(index() - 1) / 2].length > 0}>
+                      <ChatContextCollapse
+                        context={contextHistory()[(index() - 1) / 2]}
+                      />
+                    </Show>
                   </div>
                 </div>
               </Show>

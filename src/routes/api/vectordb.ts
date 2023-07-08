@@ -73,7 +73,7 @@ export async function store_epub() {
 
 export const trimContext = (context: Context[]) => {
   let total_chars = 0;
-  const MAX_CHARS = 3500 * 4;
+  const MAX_CHARS = 3500 * 4; // 4 chars per token
   const trimmed_context = context.map((obj: Context) => {
     total_chars += obj["paragraph_text"].length;
     if (total_chars < MAX_CHARS) {
@@ -111,11 +111,12 @@ The question may contain alternate names for Paramahansa Yogananda, such as Guru
 Mukunda, Yoganandaji and Gurudeva. Substitute these names with Paramahansa Yogananda and Mukunda when necessary. \
 The query can use the previous conversation history to resolve ambiguities. \
 Respond with only the contextual query keywords seperated by spaces. \
+Do not try to add extra information, not otherwise provided in the conversation. \
 For example: keyword1 keyword2 keyword3 etc.\n\n\
 Conversation history:\n{conversation_history}{x}"
 ),
 ]);
-const chatHistory = generate_base_chat_history(conversation_history)
+const chatHistory = generate_base_chat_history([conversation_history[conversation_history.length -1]])
 const memory = new BufferMemory({
   chatHistory: new ChatMessageHistory(chatHistory),
   memoryKey: "conversation_history",

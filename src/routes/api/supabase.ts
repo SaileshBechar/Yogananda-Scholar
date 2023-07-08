@@ -9,39 +9,66 @@ export const createSupabaseClient = () => {
   return supabase;
 };
 
-export async function retrieve_texts(supabase: SupabaseClient<any, "public", any>, query : string) {
-    const embeddings = new OpenAIEmbeddings();
-    const queryEmbedding = await embeddings.embedQuery(query);
+export async function retrieve_texts(
+  supabase: SupabaseClient<any, "public", any>,
+  query: string
+) {
+  const embeddings = new OpenAIEmbeddings();
+  const queryEmbedding = await embeddings.embedQuery(query);
 
-    const { data, error } = await supabase.rpc('match_documents', {query_embedding : queryEmbedding, match_count : 10})
-    if (error) console.log(error)
-    return data
+  const { data, error } = await supabase.rpc("match_documents", {
+    query_embedding: queryEmbedding,
+    match_count: 15,
+  });
+  if (error) console.log(error);
+  return data;
 }
 
-export async function concatonate_adjacent_paragraphs(supabase: SupabaseClient<any, "public", any>, context : Context[], num_paragraphs : number = 3) {
-    const concatContext : Context[] = []
-    for (let i = 0; i < context.length; i++) {
-        if (i > num_paragraphs) {
-            concatContext.push(context[i])
-        } else {
-            const obj = context[i]
-            const above_paragraph = await fetch_paragraph(supabase, (Number(obj.paragraph_id) + 1).toString())
-            const below_paragraph = await fetch_paragraph(supabase, (Number(obj.paragraph_id) - 1).toString())
-            let above_paragraph_text = ""
-            let below_paragraph_text = ""
-            if (above_paragraph.data) {
-                above_paragraph_text = above_paragraph.data[0].paragraph_text
-            }
-            if (below_paragraph.data) {
-                below_paragraph_text = below_paragraph.data[0].paragraph_text
-            }
-            concatContext.push({
-                ...obj,
-                paragraph_text : above_paragraph_text + " " + obj.paragraph_text + " " +  below_paragraph_text
-            })
+export async function concatonate_adjacent_paragraphs(
+  supabase: SupabaseClient<any, "public", any>,
+  context: Context[],
+  num_paragraphs: number = 3
+) {
+  const num_to_concat = Math.max(
+    num_paragraphs,
+    Math.round(context.length / 3)
+  );
+  const concatContext: Context[] = [];
+  for (let i = 0; i < context.length; i++) {
+    if (i >= num_to_concat) {
+      concatContext.push(context[i]);
+    } else {
+      const obj = context[i];
+      let above_paragraph_text = "";
+      let below_paragraph_text = "";
+      for (let adj_i = 1; adj_i <= 3; adj_i++) {
+        const above_paragraph = await fetch_paragraph(
+          supabase,
+          (Number(obj.paragraph_id) + adj_i).toString()
+        );
+        if (above_paragraph.data) {
+          above_paragraph_text = above_paragraph_text + above_paragraph.data[0].paragraph_text;
         }
+        const below_paragraph = await fetch_paragraph(
+          supabase,
+          (Number(obj.paragraph_id) - adj_i).toString()
+        );
+        if (below_paragraph.data) {
+          below_paragraph_text = below_paragraph.data[0].paragraph_text + below_paragraph_text;
+        }
+      }
+      concatContext.push({
+        ...obj,
+        paragraph_text:
+          above_paragraph_text +
+          " " +
+          obj.paragraph_text +
+          " " +
+          below_paragraph_text,
+      });
     }
-    return concatContext
+  }
+  return concatContext;
 }
 
 export const insert_book = async (
@@ -88,8 +115,8 @@ export const fetch_paragraph = async (
     .from("paragraphs")
     .select("paragraph_text, chapter_id, chapters(chapter_id)") // join on chapters table
     .eq("paragraph_id", paragraph_id)
-    .eq('chapters.chapter_name', 'paragraphs.chapter_name')
-    .limit(1)
+    .eq("chapters.chapter_name", "paragraphs.chapter_name")
+    .limit(1);
 };
 
 export const insert_paragraph = async (
@@ -127,4 +154,3 @@ export const insert_line = async (
   }
   return error;
 };
-

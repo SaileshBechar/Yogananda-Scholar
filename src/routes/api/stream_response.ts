@@ -22,7 +22,7 @@ const stream_ai_response = (context: string, chatHistory: BaseChatMessage[]) => 
 You will provide an answer ONLY based on the text from books given in triple square brackets. \
 Do not provide the book text source in your answer. \
 Students can refer to Paramahansa Yogananda as Guruji, Master, Mukunda or Gurudeva. \
-Please answer the student using the name for him they used. \
+Please answer the student according to the name they used. \
 You can answer all scholarly questions, but if the student asks for advice, \
 respond with 'Sorry, I can only answer scholarly questions, \
 please reach out to Mother Center for further council (www.yogananda.org).'\n\n\
@@ -41,23 +41,21 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
   const encoder = new TextEncoder();
   const writer = stream.writable.getWriter();
 
-  chain.call({ context }, [
-    {
-      async handleChainStart() {
-        await writer.ready;
-        await writer.write(encoder.encode(`${context}`));
+  writer.write(encoder.encode(`${context}`)).then(() => {
+    chain.call({ context }, [
+      {
+        async handleLLMNewToken(token) {
+          await writer.ready;
+          await writer.write(encoder.encode(`${token}`));
+        },
+        async handleLLMEnd() {
+          await writer.ready;
+          await writer.close();
+        },
       },
-      async handleLLMNewToken(token) {
-        await writer.ready;
-        await writer.write(encoder.encode(`${token}`));
-      },
-      async handleLLMEnd() {
-        await writer.ready;
-        await writer.close();
-      },
-    },
-  ]);
-
+    ]);
+  })
+    
   return stream.readable;
 };
 
@@ -78,5 +76,5 @@ export async function POST({ request }: APIEvent) {
   const chatHistory = generate_base_chat_history(conversation_history)
   const stream = stream_ai_response(JSON.stringify(trimmed_context), chatHistory);
 
-  return new Response(await stream);
+  return new Response(stream);
 }
