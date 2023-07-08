@@ -41,20 +41,22 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
   const encoder = new TextEncoder();
   const writer = stream.writable.getWriter();
 
-  writer.write(encoder.encode(`${context}`)).then(() => {
-    chain.call({ context }, [
-      {
-        async handleLLMNewToken(token) {
-          await writer.ready;
-          await writer.write(encoder.encode(`${token}`));
-        },
-        async handleLLMEnd() {
-          await writer.ready;
-          await writer.close();
-        },
+  chain.call({ context }, [
+    {
+      async handleLLMStart() {
+        await writer.ready
+        await writer.write(encoder.encode(`${context}`))
       },
-    ]);
-  })
+      async handleLLMNewToken(token) {
+        await writer.ready;
+        await writer.write(encoder.encode(`${token}`));
+      },
+      async handleLLMEnd() {
+        await writer.ready;
+        await writer.close();
+      },
+    },
+  ]);
     
   return stream.readable;
 };

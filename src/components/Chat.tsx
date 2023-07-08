@@ -52,12 +52,15 @@ export const Chat: Component<{}> = () => {
           break;
         }
 
-        const data = value ? new TextDecoder().decode(value) : "";
+        let data = value ? new TextDecoder().decode(value) : "";
         if (!isRecievedSources) {
           console.log("Parsing sources", data);
-          setContextHistory((prev) => [...prev, JSON.parse(data)]);
+          const split_data = data.split("]") // Split by end of json arr
+          setContextHistory((prev) => [...prev, JSON.parse(split_data[0] + "]")]);
           isRecievedSources = true;
-        } else {
+          data = split_data[1] // after json should be text
+        } 
+        if (data) {
           setIsWaitingForCompletion(false);
           setConversation((prev) => [
             ...prev.slice(0, -1),
@@ -67,6 +70,7 @@ export const Chat: Component<{}> = () => {
             },
           ]);
         }
+          
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -142,7 +146,7 @@ export const Chat: Component<{}> = () => {
           type="text"
           placeholder="Search your library."
           ref={inputRef}
-          class="input input-bordered input-secondary w-full pr-14"
+          class="input input-bordered input-secondary w-full pr-16"
           onkeypress={(e: any) => {
             if (e.key == "Enter" && !isCompleting()) handleUserInput();
           }}
