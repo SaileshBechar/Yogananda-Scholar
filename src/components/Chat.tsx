@@ -28,7 +28,23 @@ export const Chat: Component<{}> = () => {
     })
   );
 
-  async function fetchData(url: string, data: {}): Promise<void> {
+  async function fetchContext(url: string, data: {}): Promise<void> {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      const json_response = await response.json();
+      setContextHistory((prev) => [...prev, json_response["context"]]);
+    } catch (error) {
+      console.error("Error fetching context:", error);
+    }
+  }
+
+  async function streamResponse(url: string, data: {}): Promise<void> {
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -44,7 +60,6 @@ export const Chat: Component<{}> = () => {
       }
       setConversation((prev) => [...prev, { content: "", role: "ai" }]);
 
-      let isRecievedSources = false;
       while (true) {
         const { value, done } = await reader.read();
 
@@ -53,13 +68,6 @@ export const Chat: Component<{}> = () => {
         }
 
         let data = value ? new TextDecoder().decode(value) : "";
-        if (!isRecievedSources) {
-          console.log("Parsing sources", data);
-          const split_data = data.split("]") // Split by end of json arr
-          setContextHistory((prev) => [...prev, JSON.parse(split_data[0] + "]")]);
-          isRecievedSources = true;
-          data = split_data[1] // after json should be text
-        } 
         if (data) {
           setIsWaitingForCompletion(false);
           setConversation((prev) => [
@@ -70,10 +78,9 @@ export const Chat: Component<{}> = () => {
             },
           ]);
         }
-          
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error streaming response:", error);
     }
   }
 
@@ -86,11 +93,18 @@ export const Chat: Component<{}> = () => {
         { content: inputRef?.value as string, role: "human" },
       ]);
 
-      const url = import.meta.env.VITE_BASE_URL + "/api/stream_response";
-      const data = {
+      const context_url = import.meta.env.VITE_BASE_URL + "/api/vectordb_retrieval";
+      const context_data = {
         conversation: conversation(),
       };
-      await fetchData(url, data);
+      await fetchContext(context_url, context_data);
+
+      const stream_url = import.meta.env.VITE_BASE_URL + "/api/stream_response";
+      const stream_data = {
+        conversation: conversation(),
+        context: contextHistory()[contextHistory().length - 1],
+      };
+      await streamResponse(stream_url, stream_data);
 
       setIsCompleting(false);
 
@@ -146,7 +160,7 @@ export const Chat: Component<{}> = () => {
           type="text"
           placeholder="Search your library."
           ref={inputRef}
-          class="input input-bordered input-secondary w-full pr-16"
+          class="input input-bordered input-secondary w-full pr-[68px]"
           onkeypress={(e: any) => {
             if (e.key == "Enter" && !isCompleting()) handleUserInput();
           }}

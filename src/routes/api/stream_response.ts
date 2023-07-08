@@ -43,10 +43,6 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
 
   chain.call({ context }, [
     {
-      async handleLLMStart() {
-        await writer.ready
-        await writer.write(encoder.encode(`${context}`))
-      },
       async handleLLMNewToken(token) {
         await writer.ready;
         await writer.write(encoder.encode(`${token}`));
@@ -64,19 +60,12 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
 export async function POST({ request }: APIEvent) {
   const data = await request.json();
 
+  const context : Context[] = data["context"]
   const conversation_history : Conversation[] = data["conversation"];
   console.log("Base Query", conversation_history[conversation_history.length - 1].content);
   
-  const retrieval_query = await generate_retrieval_query(conversation_history)
-  console.log("Retrieval Query", retrieval_query);
-  
-  const supabaseClient = createSupabaseClient();
-  const context = await retrieve_texts(supabaseClient, retrieval_query);
-  const concat_context = await concatonate_adjacent_paragraphs(supabaseClient, context)
-  const trimmed_context = trimContext(concat_context);
-  
   const chatHistory = generate_base_chat_history(conversation_history)
-  const stream = stream_ai_response(JSON.stringify(trimmed_context), chatHistory);
+  const stream = stream_ai_response(JSON.stringify(context), chatHistory);
 
   return new Response(stream);
 }
