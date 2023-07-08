@@ -53,9 +53,8 @@ export const Chat: Component<{}> = () => {
         }
 
         const data = value ? new TextDecoder().decode(value) : "";
-
         if (!isRecievedSources) {
-          console.log("Parsing sources");
+          console.log("Parsing sources", data);
           setContextHistory((prev) => [...prev, JSON.parse(data)]);
           isRecievedSources = true;
         } else {

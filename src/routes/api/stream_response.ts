@@ -43,7 +43,7 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
 
   chain.call({ context }, [
     {
-      async handleLLMStart() {
+      async handleChainStart() {
         await writer.ready;
         await writer.write(encoder.encode(`${context}`));
       },
