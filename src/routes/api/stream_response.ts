@@ -8,18 +8,19 @@ import {
   AIMessagePromptTemplate,
 } from "langchain/prompts";
 import { BufferMemory, ChatMessageHistory } from "langchain/memory";
-import { HumanChatMessage, AIChatMessage } from "langchain/schema";
+import { HumanChatMessage, AIChatMessage, BaseChatMessage } from "langchain/schema";
 import { Context, Conversation } from "~/types";
-import { generate_retrieval_query, retrieve_texts, trimContext } from "./vectordb";
+import { generate_base_chat_history, generate_retrieval_query, trimContext } from "./vectordb";
+import { concatonate_adjacent_paragraphs, createSupabaseClient, retrieve_texts } from "./supabase";
 
 
-const stream_ai_response = (context: string, conversation_history: Conversation[]) => {
+const stream_ai_response = (context: string, chatHistory: BaseChatMessage[]) => {
   const chat = new ChatOpenAI({ temperature: 0, streaming: true });
   const chatPrompt = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(
-      "You are a scholar that will answer questions about Paramahansa Yogananda and his books. \
+      "You are a helpful scholar who will answer questions about Paramahansa Yogananda and his books. \
 You will provide an answer ONLY based on the text from books given in triple square brackets. \
-Do not provide the book text source in the answer. \
+Do not provide the book text source in your answer. \
 Students can refer to Paramahansa Yogananda as Guruji, Master, Mukunda or Gurudeva. \
 Please answer the student using the name for him they used. \
 You can answer all scholarly questions, but if the student asks for advice, \
@@ -29,19 +30,11 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
     )
   ]);
 
-  const chatHistory = conversation_history.map((conversation) => {
-    if (conversation.role === "human") {
-      return new HumanChatMessage(conversation.content)
-    } else{
-      return new AIChatMessage(conversation.content)
-    }
-  })
-
   const chain = new LLMChain({
     memory: new BufferMemory({chatHistory: new ChatMessageHistory(chatHistory), returnMessages: false, memoryKey: "history", humanPrefix: "student", aiPrefix: "scholar" }),
     prompt: chatPrompt,
     llm: chat,
-    verbose: true
+    // verbose: true
   });
 
   const stream = new TransformStream();
@@ -50,13 +43,16 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
 
   chain.call({ context }, [
     {
+      async handleLLMStart() {
+        await writer.ready;
+        await writer.write(encoder.encode(`${context}`));
+      },
       async handleLLMNewToken(token) {
         await writer.ready;
         await writer.write(encoder.encode(`${token}`));
       },
       async handleLLMEnd() {
         await writer.ready;
-        await writer.write(encoder.encode(`Sources:${context}`));
         await writer.close();
       },
     },
@@ -68,16 +64,19 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
 export async function POST({ request }: APIEvent) {
   const data = await request.json();
 
-  const conversation_history = data["conversation"];
-  const question = conversation_history.slice(-1)[0].content
-  console.log("Base Query",  conversation_history[conversation_history.length -1]);
-  const retrieval_query = await generate_retrieval_query(question)
-  console.log("Retrieval Query", retrieval_query);
-  const context = await retrieve_texts(retrieval_query);
+  const conversation_history : Conversation[] = data["conversation"];
+  console.log("Base Query", conversation_history[conversation_history.length - 1].content);
   
-  const trimmed_context = trimContext(context);
-
-  const stream = stream_ai_response(JSON.stringify(trimmed_context), conversation_history);
+  const retrieval_query = await generate_retrieval_query(conversation_history)
+  console.log("Retrieval Query", retrieval_query);
+  
+  const supabaseClient = createSupabaseClient();
+  const context = await retrieve_texts(supabaseClient, retrieval_query);
+  const concat_context = await concatonate_adjacent_paragraphs(supabaseClient, context)
+  const trimmed_context = trimContext(concat_context);
+  
+  const chatHistory = generate_base_chat_history(conversation_history)
+  const stream = stream_ai_response(JSON.stringify(trimmed_context), chatHistory);
 
   return new Response(await stream);
 }

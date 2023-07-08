@@ -1,155 +1,132 @@
 import { EPubLoader } from "langchain/document_loaders/fs/epub";
-import { createSupabaseClient } from "./supabase";
-import { SupabaseClient } from "@supabase/supabase-js";
+import {
+  createSupabaseClient,
+  insert_book,
+  insert_chapter,
+  insert_line,
+  insert_paragraph,
+} from "./supabase";
 import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { Context } from "~/types";
-import { LLMChain } from "langchain";
+import { Context, Conversation } from "~/types";
+import { LLMChain } from "langchain/chains";
 import { ChatOpenAI } from "langchain/chat_models/openai";
-import { ChatPromptTemplate, SystemMessagePromptTemplate } from "langchain/prompts";
-const embeddings = new OpenAIEmbeddings();
-
-const insert_book = async (supabase : SupabaseClient<any, "public", any>, book_name : string) => {
-  const { data, error } = await supabase
-    .from("books")
-    .insert({
-      book_name,
-      language: "English",
-      author: "Paramahansa Yogananda",
-    })
-    .select();
-    if (data) {
-      return data[0].book_id
-    }
-    return error
-}
-
-const insert_chapter = async (supabase : SupabaseClient<any, "public", any>, chapter_name : string, book_id : string) => {
-  const { data, error } = await supabase
-    .from("chapters")
-    .insert({
-      chapter_name,
-      book_id
-    })
-    .select();
-    if (data) {
-      return data[0].chapter_id
-    }
-    return error
-}
-
-const insert_paragraph = async (supabase : SupabaseClient<any, "public", any>, chapter_id : string, paragraph_text : string) => {
-  const { data, error } = await supabase
-    .from("paragraphs")
-    .insert({
-      chapter_id,
-      paragraph_text
-    })
-    .select();
-    if (data) {
-      return data[0].paragraph_id
-    }
-    return error
-}
-
-const insert_line = async (supabase : SupabaseClient<any, "public", any>, paragraph_id : string, embedding : number[]) => {
-  const { data, error } = await supabase
-    .from("lines")
-    .insert({
-      paragraph_id,
-      embedding
-    })
-    .select();
-    if (data) {
-      return data[0].line_id
-    }
-    return error
-}
+import {
+  ChatPromptTemplate,
+  HumanMessagePromptTemplate,
+  SystemMessagePromptTemplate,
+} from "langchain/prompts";
+import { BufferMemory, ChatMessageHistory } from "langchain/memory";
+import { AIChatMessage, BaseChatMessage, HumanChatMessage } from "langchain/schema";
 
 export async function store_epub() {
   const supabase = createSupabaseClient();
-  
+  const embeddings = new OpenAIEmbeddings();
+
   const loader = new EPubLoader("src/books/Autobiography-of-a-Yogi-2019.epub");
   const bookName = "Autobiography of a Yogi";
   const docs = await loader.load();
-  
-  console.log("Storing", bookName)
-  const bookId = await insert_book(supabase, bookName)
-  
-  let paragraphCount = 0
-  let lineCount = 0
+
+  console.log("Storing", bookName);
+  // const bookId = await insert_book(supabase, bookName)
+
+  let paragraphCount = 0;
+  let lineCount = 0;
   for (let doc of docs) {
     const paragraphSplits = doc.pageContent.split("\n\n");
-    const chapter = paragraphSplits.splice(0, 2).join(" ").replace(/\[[^\]]+\]/g, "")
-    const chapterId = await insert_chapter(supabase, chapter, bookId)
-    console.log("Embedding", doc.metadata["chapter"], chapter)
-    for (let paragraph of paragraphSplits) {
-      const pattern = /(?<=\D)(?<!January |February |March |April |May |June |July |August |September |October |November |December )\d{1,2}\b|(?<=^)\d{1,2}\s|^\n+|\n+$|\[[^\]]+\]/g
-      const trimmedParagraph = paragraph.trim().replace(pattern, "");
-      const paragraphId = await insert_paragraph(supabase, chapterId, trimmedParagraph)
-      const lineSplits = trimmedParagraph.split(/[.!?\n]/);
-      paragraphCount++
-      if (trimmedParagraph) {
-        const filteredlineSplits = lineSplits.filter(sentence => sentence.trim() !== "");
-        for (let line in filteredlineSplits) {
-          lineCount++  
-          const embedding = await embeddings.embedQuery(line);
-          insert_line(supabase, paragraphId, embedding)
+    const chapter = paragraphSplits.splice(0, 2);
+    let chapterString = "";
+    if (chapter[0].toLowerCase().includes("chapter")) {
+      chapterString = chapter
+        .join(":")
+        .replace(/\[[^\]]+\]|\n/g, " ")
+        .trim(); // join chapter number and title and remove image tags
+    } else if (!chapter[0].toLowerCase().includes("image")) {
+      chapterString = chapter[0].replace(/\[[^\]]+\]|\n/g, " ").trim(); // remove image tags
+    }
+    // const chapterId = await insert_chapter(supabase, chapterString, bookId)
+    if (chapterString) {
+      for (let paragraph of paragraphSplits) {
+        const pattern =
+          /(?<=\D)(?<!January |February |March |April |May |June |July |August |September |October |November |December )\d{1,2}\b(?!,|\s\d)|(?<=^)\d{1,2}\s|^\n+|\n+$|\[[^\]]+\]/g;
+        const trimmedParagraph = paragraph.trim().replace(pattern, "");
+        if (trimmedParagraph) {
+          // const paragraphId = await insert_paragraph(supabase, chapterId, trimmedParagraph)
+          paragraphCount++;
+          const lineSplits = trimmedParagraph.split(/[.!?\n]/);
+          const filteredlineSplits = lineSplits.filter(
+            (sentence) => sentence.trim().length > 5 // Remove lines less than 5 characters long
+          ); 
+          console.log("Embedding:", chapterString, "lines:", filteredlineSplits)
+          for (let line of filteredlineSplits) {
+            lineCount++;
+            // const embedding = await embeddings.embedQuery(`Book name: ${bookName}, Chapter: ${chapterString}, Text: ${line.trim()}`);
+            // insert_line(supabase, paragraphId, embedding)
+          }
         }
       }
     }
   }
-  
-  console.log("Storing complete!")
-  return {line_count: lineCount, paragraph_count: paragraphCount}
+
+  console.log("Storing complete!");
+  return { line_count: lineCount, paragraph_count: paragraphCount };
 }
 
-export async function retrieve_texts(query : string) {
-  const queryEmbedding = await embeddings.embedQuery(query);
-
-  const supabase = createSupabaseClient();
-  const { data, error } = await supabase.rpc('match_documents', {query_embedding : queryEmbedding, match_count : 5})
-  if (error) console.log(error)
-
-  return data
-}
-
-export const trimContext = (context : Context[]) => {
-  let total_chars = 0
-  const MAX_CHARS = 3000 * 4
-  const trimmed_context = context.map((obj : Context) => {
-    total_chars += obj['paragraph_text'].length
+export const trimContext = (context: Context[]) => {
+  let total_chars = 0;
+  const MAX_CHARS = 3500 * 4;
+  const trimmed_context = context.map((obj: Context) => {
+    total_chars += obj["paragraph_text"].length;
     if (total_chars < MAX_CHARS) {
       return {
         ...obj,
-        content: obj['paragraph_text']
+        paragraph_text: obj["paragraph_text"],
       };
     } else {
-      return
+      return;
+    }
+  });
+  console.log("Total chars", total_chars, " tokens:, ", total_chars / 4);
+  return trimmed_context;
+};
+
+export const generate_base_chat_history = (conversation_history : Conversation[]) : BaseChatMessage[] => {
+  return conversation_history.map((conversation : Conversation) => {
+    if (conversation.role === "human") {
+      return new HumanChatMessage(conversation.content)
+    } else{
+      return new AIChatMessage(conversation.content)
     }
   })
-  console.log("Total chars", total_chars, " tokens:, ", total_chars / 4)
-  return trimmed_context
 }
 
-export const generate_retrieval_query = async (query: string) => {
+export const generate_retrieval_query = async (
+  conversation_history: Conversation[]
+) => {
   const chat = new ChatOpenAI({ temperature: 0 });
   const chatPrompt = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(
-      "You are able to exceptionally rewrite queries into keywords\
-that may appear in the books and writings of Paramahansa Yogananda. \
-Rewrite the following query given in triple square brackets into keywords. \
-The query may contain alternate names for Paramahansa Yogananda, such as Guruji, Master, \
-Mukunda and Gurudeva. Substitute these names with his original name when necessary.\n\n\
-query: [[[{query}]]]\n\n"
+      "Reword the last question in the conversation history \
+to a contextualized vector database query that emphasizes all keywords. \
+The question may contain alternate names for Paramahansa Yogananda, such as Guruji, Master, \
+Mukunda, Yoganandaji and Gurudeva. Substitute these names with Paramahansa Yogananda and Mukunda when necessary. \
+The query can use the previous conversation history to resolve ambiguities. \
+Respond with only the contextual query keywords seperated by spaces. \
+For example: keyword1 keyword2 keyword3 etc.\n\n\
+Conversation history:\n{conversation_history}{x}"
 ),
 ]);
-// Do not try to add additional information that does not appear in the original query. \
+const chatHistory = generate_base_chat_history(conversation_history)
+const memory = new BufferMemory({
+  chatHistory: new ChatMessageHistory(chatHistory),
+  memoryKey: "conversation_history",
+  returnMessages: false
+});
   const chain = new LLMChain({
+    memory:memory,
     prompt: chatPrompt,
     llm: chat,
+    // verbose: true
   });
 
-  return chain.run(
-    query,
-  );
+  return chain.run("")
 };

@@ -43,8 +43,8 @@ export const Chat: Component<{}> = () => {
         throw new Error("Failed to get response reader.");
       }
       setConversation((prev) => [...prev, { content: "", role: "ai" }]);
-      setIsWaitingForCompletion(false);
 
+      let isRecievedSources = false;
       while (true) {
         const { value, done } = await reader.read();
 
@@ -53,13 +53,13 @@ export const Chat: Component<{}> = () => {
         }
 
         const data = value ? new TextDecoder().decode(value) : "";
-        
-        if (data.startsWith("Sources:")) {
-          console.log("Parsing sources")
-          const contextString = data.substring("Sources:".length);
-          setContextHistory((prev) => [...prev, JSON.parse(contextString)]);
-        }
-        else {
+
+        if (!isRecievedSources) {
+          console.log("Parsing sources");
+          setContextHistory((prev) => [...prev, JSON.parse(data)]);
+          isRecievedSources = true;
+        } else {
+          setIsWaitingForCompletion(false);
           setConversation((prev) => [
             ...prev.slice(0, -1),
             {
@@ -67,7 +67,7 @@ export const Chat: Component<{}> = () => {
               content: prev[prev.length - 1].content + data,
             },
           ]);
-        } 
+        }
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -114,12 +114,16 @@ export const Chat: Component<{}> = () => {
                 </div>
               }
             >
-              <div class="chat chat-start">
-                <div class="chat-bubble mt-10 flex flex-col gap-4 bg-secondary text-secondary-content">
-                  {bubble.content}
-                  <ChatContextCollapse context={contextHistory()[(index() - 1) / 2]}/>
+              <Show when={bubble.content.length > 0}>
+                <div class="chat chat-start">
+                  <div class="chat-bubble mt-10 flex flex-col gap-4 bg-secondary text-secondary-content">
+                    {bubble.content}
+                    <ChatContextCollapse
+                      context={contextHistory()[(index() - 1) / 2]}
+                    />
+                  </div>
                 </div>
-              </div>
+              </Show>
             </Show>
           )}
         </For>
@@ -143,7 +147,7 @@ export const Chat: Component<{}> = () => {
           }}
         />
         <button
-          class="btn btn-primary w-16 p-2 absolute right-0"
+          class="btn btn-secondary w-16 p-2 absolute right-0"
           onClick={handleUserInput}
           disabled={isCompleting()}
         >

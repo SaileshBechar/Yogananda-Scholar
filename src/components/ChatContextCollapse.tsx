@@ -14,7 +14,7 @@ const ChatContextCollapse: Component<{ context: Context[] }> = (props) => {
             <div class="p-10 rounded-lg my-4 bg-secondary text-secondary-content">
               <div>{item.paragraph_text}</div>
               <div class="inline-flex justify-between gap-4 mt-4 w-full">
-                <div>{item.chapter_name.toLowerCase()},</div>
+                <div>{item.chapter_name.toLowerCase()}</div>
                 <div>
                   <span>{item.book_name}, </span>
                   <span>{item.author}</span>
