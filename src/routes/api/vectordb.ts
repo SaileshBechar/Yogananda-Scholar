@@ -73,17 +73,10 @@ export async function store_epub() {
 
 export const trimContext = (context: Context[]) => {
   let total_chars = 0;
-  const MAX_CHARS = 3500 * 4; // 4 chars per token
-  const trimmed_context = context.map((obj: Context) => {
+  const MAX_CHARS = 3000 * 4; // 4 chars per token
+  const trimmed_context = context.filter((obj: Context) => {
     total_chars += obj["paragraph_text"].length;
-    if (total_chars < MAX_CHARS) {
-      return {
-        ...obj,
-        paragraph_text: obj["paragraph_text"],
-      };
-    } else {
-      return;
-    }
+    return (total_chars < MAX_CHARS)
   });
   console.log("Total chars", total_chars, " tokens:, ", total_chars / 4);
   return trimmed_context;

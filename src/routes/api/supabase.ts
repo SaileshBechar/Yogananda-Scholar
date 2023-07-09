@@ -33,41 +33,42 @@ export async function concatonate_adjacent_paragraphs(
     num_paragraphs,
     Math.round(context.length / 3)
   );
-  const concatContext: Context[] = [];
-  for (let i = 0; i < context.length; i++) {
-    if (i >= num_to_concat) {
-      concatContext.push(context[i]);
-    } else {
-      const obj = context[i];
-      let above_paragraph_text = "";
-      let below_paragraph_text = "";
-      for (let adj_i = 1; adj_i <= 3; adj_i++) {
-        const above_paragraph = await fetch_paragraph(
-          supabase,
-          (Number(obj.paragraph_id) + adj_i).toString()
-        );
-        if (above_paragraph.data) {
-          above_paragraph_text = above_paragraph_text + above_paragraph.data[0].paragraph_text;
+  const concatContext = await Promise.all(
+    context
+      .filter((_, index) => index >= num_to_concat)
+      .map(async (obj) => {
+        let above_paragraph_text = "";
+        let below_paragraph_text = "";
+        for (let adj_i = 1; adj_i <= 3; adj_i++) {
+          const above_paragraph = await fetch_paragraph(
+            supabase,
+            (Number(obj.paragraph_id) + adj_i).toString()
+          );
+          if (above_paragraph.data) {
+            above_paragraph_text =
+              above_paragraph_text + above_paragraph.data[0].paragraph_text;
+          }
+          const below_paragraph = await fetch_paragraph(
+            supabase,
+            (Number(obj.paragraph_id) - adj_i).toString()
+          );
+          if (below_paragraph.data) {
+            below_paragraph_text =
+              below_paragraph.data[0].paragraph_text + below_paragraph_text;
+          }
         }
-        const below_paragraph = await fetch_paragraph(
-          supabase,
-          (Number(obj.paragraph_id) - adj_i).toString()
-        );
-        if (below_paragraph.data) {
-          below_paragraph_text = below_paragraph.data[0].paragraph_text + below_paragraph_text;
-        }
-      }
-      concatContext.push({
-        ...obj,
-        paragraph_text:
-          above_paragraph_text +
-          " " +
-          obj.paragraph_text +
-          " " +
-          below_paragraph_text,
-      });
-    }
-  }
+        return {
+          ...obj,
+          paragraph_text:
+            above_paragraph_text +
+            " " +
+            obj.paragraph_text +
+            " " +
+            below_paragraph_text,
+        };
+      })
+  );
+
   return concatContext;
 }
 

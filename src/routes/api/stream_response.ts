@@ -7,14 +7,32 @@ import {
   HumanMessagePromptTemplate,
   AIMessagePromptTemplate,
 } from "langchain/prompts";
-import { BufferMemory, ChatMessageHistory } from "langchain/memory";
-import { HumanChatMessage, AIChatMessage, BaseChatMessage } from "langchain/schema";
+import {
+  BufferMemory,
+  BufferWindowMemory,
+  ChatMessageHistory,
+} from "langchain/memory";
+import {
+  HumanChatMessage,
+  AIChatMessage,
+  BaseChatMessage,
+} from "langchain/schema";
 import { Context, Conversation } from "~/types";
-import { generate_base_chat_history, generate_retrieval_query, trimContext } from "./vectordb";
-import { concatonate_adjacent_paragraphs, createSupabaseClient, retrieve_texts } from "./supabase";
+import {
+  generate_base_chat_history,
+  generate_retrieval_query,
+  trimContext,
+} from "./vectordb";
+import {
+  concatonate_adjacent_paragraphs,
+  createSupabaseClient,
+  retrieve_texts,
+} from "./supabase";
 
-
-const stream_ai_response = (context: string, chatHistory: BaseChatMessage[]) => {
+const stream_ai_response = (
+  context: string,
+  chatHistory: BaseChatMessage[]
+) => {
   const chat = new ChatOpenAI({ temperature: 0, streaming: true });
   const chatPrompt = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(
@@ -27,11 +45,18 @@ You can answer all scholarly questions, but if the student asks for advice, \
 respond with 'Sorry, I can only answer scholarly questions, \
 please reach out to Mother Center for further council (www.yogananda.org).'\n\n\
 Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nscholar:"
-    )
+    ),
   ]);
 
   const chain = new LLMChain({
-    memory: new BufferMemory({chatHistory: new ChatMessageHistory(chatHistory), returnMessages: false, memoryKey: "history", humanPrefix: "student", aiPrefix: "scholar" }),
+    memory: new BufferWindowMemory({
+      chatHistory: new ChatMessageHistory(chatHistory),
+      returnMessages: false,
+      memoryKey: "history",
+      humanPrefix: "student",
+      aiPrefix: "scholar",
+      k: 3,
+    }),
     prompt: chatPrompt,
     llm: chat,
     // verbose: true
@@ -53,18 +78,21 @@ Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nschola
       },
     },
   ]);
-    
+
   return stream.readable;
 };
 
 export async function POST({ request }: APIEvent) {
   const data = await request.json();
 
-  const context : Context[] = data["context"]
-  const conversation_history : Conversation[] = data["conversation"];
-  console.log("Base Query", conversation_history[conversation_history.length - 1].content);
-  
-  const chatHistory = generate_base_chat_history(conversation_history)
+  const context: Context[] = data["context"];
+  const conversation_history: Conversation[] = data["conversation"];
+  console.log(
+    "Base Query",
+    conversation_history[conversation_history.length - 1].content
+  );
+
+  const chatHistory = generate_base_chat_history(conversation_history);
   const stream = stream_ai_response(JSON.stringify(context), chatHistory);
 
   return new Response(stream);
