@@ -12,7 +12,6 @@ export async function POST({ request }: APIEvent) {
     
     const retrieval_query = await generate_retrieval_query(conversation_history)
     console.log("Retrieval Query", retrieval_query);
-    
     const supabaseClient = createSupabaseClient();
     const context = await retrieve_texts(supabaseClient, retrieval_query);
     const concat_context = await concatonate_adjacent_paragraphs(supabaseClient, context)

@@ -56,8 +56,10 @@ export async function store_epub() {
           const filteredlineSplits = lineSplits.filter(
             (sentence) => sentence.trim().length > 5 // Remove lines less than 5 characters long
           ); 
-          console.log("Embedding:", chapterString, "lines:", filteredlineSplits)
           for (let line of filteredlineSplits) {
+            if (line.includes("now or never")) {
+              console.log(`Book name: ${bookName}, Chapter: ${chapterString}, Text: ${line.trim()}`)
+            }
             lineCount++;
             // const embedding = await embeddings.embedQuery(`Book name: ${bookName}, Chapter: ${chapterString}, Text: ${line.trim()}`);
             // insert_line(supabase, paragraphId, embedding)

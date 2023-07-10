@@ -93,7 +93,8 @@ export const Chat: Component<{}> = () => {
         { content: inputRef?.value as string, role: "human" },
       ]);
 
-      const context_url = import.meta.env.VITE_BASE_URL + "/api/vectordb_retrieval";
+      const context_url =
+        import.meta.env.VITE_BASE_URL + "/api/vectordb_retrieval";
       const context_data = {
         conversation: conversation(),
       };
@@ -114,11 +115,12 @@ export const Chat: Component<{}> = () => {
 
   const clearChat = async () => {
     setConversation([]);
+    setContextHistory([]);
   };
 
   return (
     <>
-      <div class="overflow-auto sm:px-10 px-5 pb-4" ref={chatboxRef}>
+      <div class="overflow-auto sm:px-10 pb-4" ref={chatboxRef}>
         <For each={conversation()}>
           {(bubble, index) => (
             <Show
@@ -172,12 +174,12 @@ export const Chat: Component<{}> = () => {
         >
           <FiSearch size={20} />
         </button>
-        {/* <button
+        <button
           class="btn btn-primary hidden sm:inline-flex absolute -right-20"
           onClick={clearChat}
         >
           <HiOutlineTrash size={20} />
-        </button> */}
+        </button>
       </div>
     </>
   );
