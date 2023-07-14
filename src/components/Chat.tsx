@@ -11,6 +11,8 @@ import {
 } from "solid-js";
 import ChatContextCollapse from "./ChatContextCollapse";
 import { Conversation, Context } from "~/types";
+import ChatBubbleWindow from "./ChatBubbleWindow";
+import ChatWelcomeWindow from "./ChatWelcomeWindow";
 
 export const Chat: Component<{}> = () => {
   const [conversation, setConversation] = createSignal<Conversation[]>([]);
@@ -84,13 +86,13 @@ export const Chat: Component<{}> = () => {
     }
   }
 
-  const handleUserInput = async () => {
+  const handleUserInput = async (question : string) => {
     setIsWaitingForCompletion(true);
     setIsCompleting(true);
-    if (inputRef?.value) {
+    if (question) {
       setConversation((prev) => [
         ...prev,
-        { content: inputRef?.value as string, role: "human" },
+        { content: question, role: "human" },
       ]);
 
       const context_url =
@@ -109,7 +111,7 @@ export const Chat: Component<{}> = () => {
 
       setIsCompleting(false);
 
-      inputRef.value = "";
+      (inputRef as HTMLInputElement).value = '';
     }
   };
 
@@ -119,68 +121,43 @@ export const Chat: Component<{}> = () => {
   };
 
   return (
-    <>
-      <div class="overflow-auto sm:px-10 pb-4" ref={chatboxRef}>
-        <For each={conversation()}>
-          {(bubble, index) => (
-            <Show
-              when={bubble.role === "ai"}
-              fallback={
-                <div class="chat chat-end">
-                  <div class="chat-bubble mt-10 flex bg-primary text-primary-content">
-                    {bubble.content}
-                  </div>
-                </div>
-              }
-            >
-              <Show when={bubble.content.length > 0}>
-                <div class="chat chat-start">
-                  <div class="chat-bubble mt-10 flex flex-col gap-4 bg-secondary text-secondary-content">
-                    {bubble.content}
-                    <Show when={contextHistory()[(index() - 1) / 2].length > 0}>
-                      <ChatContextCollapse
-                        context={contextHistory()[(index() - 1) / 2]}
-                      />
-                    </Show>
-                  </div>
-                </div>
-              </Show>
-            </Show>
-          )}
-        </For>
-        <Show when={isWaitingForCompletion()} fallback={<></>}>
-          <div class="chat chat-start">
-            <div class="chat-bubble mt-10 flex bg-secondary text-secondary-content">
-              Studying{" "}
-              <span class="ml-2 loading loading-ring loading-sm"></span>
-            </div>
-          </div>
-        </Show>
-      </div>
+    <main class="h-screen flex flex-col justify-end text-lg">
+      <Show
+        when={conversation().length > 0}
+        fallback={<ChatWelcomeWindow buttonHandler={handleUserInput} />}
+      >
+        <ChatBubbleWindow
+          chatboxRef={chatboxRef}
+          contextHistory={contextHistory}
+          conversation={conversation}
+          isWaitingForCompletion={isWaitingForCompletion}
+        />
+      </Show>
       <div class="relative mt-4 sm:mx-[20%] mx-5">
         <input
           type="text"
-          placeholder="Search your library."
+          placeholder="Ask a question"
           ref={inputRef}
           class="input input-bordered input-secondary w-full pr-[68px]"
           onkeypress={(e: any) => {
-            if (e.key == "Enter" && !isCompleting()) handleUserInput();
+            if (e.key == "Enter" && !isCompleting()) handleUserInput(inputRef?.value as string);
           }}
         />
         <button
           class="btn btn-secondary w-16 p-2 absolute right-0"
-          onClick={handleUserInput}
+          onClick={() => handleUserInput(inputRef?.value as string)}
           disabled={isCompleting()}
         >
           <FiSearch size={20} />
         </button>
         <button
-          class="btn btn-primary hidden sm:inline-flex absolute -right-20"
+          class="btn hidden sm:inline-flex absolute -right-20"
           onClick={clearChat}
         >
           <HiOutlineTrash size={20} />
         </button>
+        <div class="text-xs text-center my-2">Not affliated with Self-Realization Fellowship</div>
       </div>
-    </>
+    </main>
   );
 };

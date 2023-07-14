@@ -11,9 +11,7 @@ export default function Home() {
       <div class="drawer drawer-mobile sm:drawer-open">
         <input id="doc-drawer" type="checkbox" class="drawer-toggle" />
         <div class="drawer-content">
-          <main class="h-screen w-full flex flex-col justify-end text-lg pb-10">
             <Chat />
-          </main>
         </div>
         <div class="drawer-side">
           <label for="doc-drawer" class="drawer-overlay"></label>
