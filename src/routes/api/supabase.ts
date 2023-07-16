@@ -41,14 +41,14 @@ export async function concatonate_adjacent_paragraphs(
         let below_paragraph_text = "";
         let adj_i = 1
         let paragraph_length = obj.paragraph_text.length
-        while (paragraph_length <= 1000 && adj_i < 20) {
+        while (paragraph_length <= 1500 && adj_i < 20) {
           const above_paragraph = await fetch_paragraph(
             supabase,
             (Number(obj.paragraph_id) + adj_i).toString()
           );
           if (above_paragraph.data) {
             above_paragraph_text =
-              above_paragraph_text + above_paragraph.data[0].paragraph_text;
+              above_paragraph_text + " " + above_paragraph.data[0].paragraph_text;
             paragraph_length += above_paragraph_text.length
           }
           const below_paragraph = await fetch_paragraph(
@@ -57,7 +57,7 @@ export async function concatonate_adjacent_paragraphs(
           );
           if (below_paragraph.data) {
             below_paragraph_text =
-              below_paragraph.data[0].paragraph_text + below_paragraph_text;
+              below_paragraph.data[0].paragraph_text + " " + below_paragraph_text;
               paragraph_length += below_paragraph_text.length
           }
           adj_i++

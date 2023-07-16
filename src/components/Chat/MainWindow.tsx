@@ -9,10 +9,10 @@ import {
   on,
   onMount,
 } from "solid-js";
-import ChatContextCollapse from "./ChatContextCollapse";
+import ChatContextCollapse from "./ContextCollapse";
 import { Conversation, Context } from "~/types";
-import ChatBubbleWindow from "./ChatBubbleWindow";
-import ChatWelcomeWindow from "./ChatWelcomeWindow";
+import ChatBubbleWindow from "./BubbleWindow";
+import ChatWelcomeWindow from "./WelcomeWindow";
 
 export const Chat: Component<{}> = () => {
   const [conversation, setConversation] = createSignal<Conversation[]>([]);
@@ -86,7 +86,7 @@ export const Chat: Component<{}> = () => {
     }
   }
 
-  const handleUserInput = async (question : string) => {
+  const handleUserInput = async (question: string) => {
     setIsWaitingForCompletion(true);
     setIsCompleting(true);
     if (question) {
@@ -109,10 +109,9 @@ export const Chat: Component<{}> = () => {
       };
       await streamResponse(stream_url, stream_data);
 
-      setIsCompleting(false);
-
-      (inputRef as HTMLInputElement).value = '';
+      (inputRef as HTMLInputElement).value = "";
     }
+    setIsCompleting(false);
   };
 
   const clearChat = async () => {
@@ -133,30 +132,34 @@ export const Chat: Component<{}> = () => {
           isWaitingForCompletion={isWaitingForCompletion}
         />
       </Show>
-      <div class="relative mt-4 sm:mx-[20%] mx-5">
-        <input
-          type="text"
-          placeholder="Ask a question"
-          ref={inputRef}
-          class="input input-bordered input-secondary w-full pr-[68px]"
-          onkeypress={(e: any) => {
-            if (e.key == "Enter" && !isCompleting()) handleUserInput(inputRef?.value as string);
-          }}
-        />
-        <button
-          class="btn btn-secondary w-16 p-2 absolute right-0"
-          onClick={() => handleUserInput(inputRef?.value as string)}
-          disabled={isCompleting()}
-        >
-          <FiSearch size={20} />
-        </button>
-        <button
-          class="btn hidden sm:inline-flex absolute -right-20"
-          onClick={clearChat}
-        >
-          <HiOutlineTrash size={20} />
-        </button>
-        <div class="text-xs text-center my-2">Not affliated with Self-Realization Fellowship</div>
+      <div class="relative mt-4 sm:mx-[20%] mx-5 flex flex-col items-center">
+        <div class="inline-flex gap-3.5 sm:w-full">
+          <div class="join sm:w-full">
+            <input
+              type="text"
+              placeholder="Ask a question"
+              ref={inputRef}
+              class="input input-bordered input-secondary w-full pr-[68px] join-item"
+              onkeypress={(e: any) => {
+                if (e.key == "Enter" && !isCompleting())
+                  handleUserInput(inputRef?.value as string);
+              }}
+            />
+            <button
+              class="btn btn-secondary w-16 p-2 join-item rounded-r-lg"
+              onClick={() => handleUserInput(inputRef?.value as string)}
+              disabled={isCompleting()}
+            >
+              <FiSearch size={20} />
+            </button>
+          </div>
+          <button class="btn" onClick={clearChat}>
+            <HiOutlineTrash size={20} />
+          </button>
+        </div>
+        <div class="text-xs text-center font-light my-2">
+          Not affliated with Self-Realization Fellowship
+        </div>
       </div>
     </main>
   );

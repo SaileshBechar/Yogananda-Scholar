@@ -2,6 +2,22 @@ import { Component, For } from "solid-js";
 import { Context } from "~/types";
 
 const ChatContextCollapse: Component<{ context: Context[] }> = (props) => {
+  const capitalizeTitle = (str: string): string => {
+    const minorWords = ["a", "an", "and", "as", "at", "but", "by", "for", "in", "of", "on", "or", "to", "up", "with"];
+  
+    const words = str.toLowerCase().split(" ");
+  
+    const capitalizedWords = words.map((word, index) =>
+      (index === 0 || index === words.length - 1 || !minorWords.includes(word))
+        ? `${word.charAt(0).toUpperCase()}${word.slice(1)}`
+        : word
+    );
+  
+    const capitalizedString = capitalizedWords.join(" ");
+  
+    return capitalizedString;
+  };
+
   return (
     <div
       tabindex="0"
@@ -14,7 +30,7 @@ const ChatContextCollapse: Component<{ context: Context[] }> = (props) => {
             <div class="p-10 rounded-lg my-4 bg-secondary text-secondary-content">
               <div>{item.paragraph_text}</div>
               <div class="inline-flex justify-between gap-4 mt-4 w-full">
-                <div>{item.chapter_name.toLowerCase()}</div>
+                <div>{capitalizeTitle(item.chapter_name)}</div>
                 <div>
                   <span>{item.book_name}, </span>
                   <span>{item.author}</span>

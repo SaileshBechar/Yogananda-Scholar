@@ -1,5 +1,5 @@
 import { Component } from "solid-js";
-import ChatWelcomeColumn from "./ChatWelcomeColumn";
+import ChatWelcomeColumn from "./WelcomeColumn";
 import { BsSun, BsBook } from 'solid-icons/bs'
 import { IoWarningOutline } from 'solid-icons/io'
 
@@ -18,9 +18,9 @@ import { IoWarningOutline } from 'solid-icons/io'
             icon={BsSun}
             buttonHandler={props.buttonHandler}
             buttonText={[
-              "Provide quotes on cultivating peace in meditation",
-              "Which metals are in an astrological bangle?",
-              "What chapter was the perfume saint?",
+              "Provide quotes on strength and overcoming obstacles",
+              "When did Guruji first have a vision of the Mount Washington headquaters?",
+              "Did Guruji eat eggs?",
             ]}
           />
           <ChatWelcomeColumn

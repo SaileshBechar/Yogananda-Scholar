@@ -1,5 +1,4 @@
 import { Component, For, Show } from "solid-js";
-import { FaSolidArrowRight } from 'solid-icons/fa'
 
 const ChatWelcomeColumn: Component<{
   header: string;

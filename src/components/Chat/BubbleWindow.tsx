@@ -1,5 +1,5 @@
 import { Accessor, Component, For, Show } from "solid-js";
-import ChatContextCollapse from "./ChatContextCollapse";
+import ChatContextCollapse from "./ContextCollapse";
 
 const ChatBubbleWindow: Component<{
   conversation: Accessor<any>;

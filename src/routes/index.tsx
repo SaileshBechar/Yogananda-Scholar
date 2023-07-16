@@ -1,9 +1,4 @@
-import { A } from "solid-start";
-import { AddDocumentSideDrawer } from "~/components/AddDocumentSideDrawer";
-import { Chat } from "~/components/Chat";
-import Counter from "~/components/Counter";
-import toast, { Toaster } from "solid-toast";
-import { Portal } from "solid-js/web";
+import { Chat } from "~/components/Chat/MainWindow";
 
 export default function Home() {
   return (
