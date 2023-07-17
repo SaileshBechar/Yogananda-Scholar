@@ -1,4 +1,5 @@
 import { Component, For, Show } from "solid-js";
+import { FaSolidArrowRight } from 'solid-icons/fa'
 
 const ChatWelcomeColumn: Component<{
   header: string;
@@ -21,10 +22,9 @@ const ChatWelcomeColumn: Component<{
             }
           >
             <button onClick={() => {if (props.buttonHandler) props.buttonHandler(text)}} class="rounded-lg border-1 p-4 bg-base-200 hover:bg-base-300">
-              {'"' + text + '"' }
-              <span class="text-lg">
-                {" →"}
-              </span>
+
+              {'"' + text + '" ' }
+              < FaSolidArrowRight class="inline-flex" size={12}/>
             </button>
           </Show>
         )}

@@ -1,18 +1,15 @@
 import { HiOutlineTrash } from "solid-icons/hi";
-import { FiSearch } from "solid-icons/fi";
 import {
   Component,
-  For,
   Show,
   createEffect,
   createSignal,
   on,
-  onMount,
 } from "solid-js";
-import ChatContextCollapse from "./ContextCollapse";
 import { Conversation, Context } from "~/types";
 import ChatBubbleWindow from "./BubbleWindow";
 import ChatWelcomeWindow from "./WelcomeWindow";
+import { FaSolidArrowRight } from 'solid-icons/fa'
 
 export const Chat: Component<{}> = () => {
   const [conversation, setConversation] = createSignal<Conversation[]>([]);
@@ -132,14 +129,14 @@ export const Chat: Component<{}> = () => {
           isWaitingForCompletion={isWaitingForCompletion}
         />
       </Show>
-      <div class="relative mt-4 sm:mx-[20%] mx-5 flex flex-col items-center">
-        <div class="inline-flex gap-3.5 sm:w-full">
-          <div class="join sm:w-full">
+      <div class="fixed flex flex-col w-full px-4 pt-4 bg-gradient-to-t from-base-100 from-50% ">
+        <div class="w-full flex gap-3.5 justify-center">
+          <div class="join w-full max-w-3xl">
             <input
               type="text"
               placeholder="Ask a question"
               ref={inputRef}
-              class="input input-bordered input-secondary w-full pr-[68px] join-item"
+              class="input input-bordered input-secondary w-full join-item"
               onkeypress={(e: any) => {
                 if (e.key == "Enter" && !isCompleting())
                   handleUserInput(inputRef?.value as string);
@@ -150,7 +147,7 @@ export const Chat: Component<{}> = () => {
               onClick={() => handleUserInput(inputRef?.value as string)}
               disabled={isCompleting()}
             >
-              <FiSearch size={20} />
+              <FaSolidArrowRight size={22} class="fill-secondary-content"/>
             </button>
           </div>
           <button class="btn" onClick={clearChat}>

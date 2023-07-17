@@ -2,6 +2,7 @@ import { Component } from "solid-js";
 import ChatWelcomeColumn from "./WelcomeColumn";
 import { BsSun, BsBook } from 'solid-icons/bs'
 import { IoWarningOutline } from 'solid-icons/io'
+import ChatContextCollapse from "./ContextCollapse";
 
   const ChatWelcomeWindow: Component<{
   buttonHandler: (question : string) => Promise<void>
@@ -19,8 +20,8 @@ import { IoWarningOutline } from 'solid-icons/io'
             buttonHandler={props.buttonHandler}
             buttonText={[
               "Provide quotes on strength and overcoming obstacles",
-              "When did Guruji first have a vision of the Mount Washington headquaters?",
-              "Did Guruji eat eggs?",
+              "Where did Guruji first have a vision of the Mount Washington headquaters?",
+              "How did Guruji escape the conversation with the talkative friend in the perfume saint chapter?",
             ]}
           />
           <ChatWelcomeColumn

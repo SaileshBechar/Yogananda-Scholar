@@ -38,13 +38,13 @@ module.exports = {
     themes: [
       {
         fire: {
-          primary: "#de6a10", // "#989FCE",
+          primary: "#052957", // "#989FCE",
 
           secondary: "#052957", // amnethsyt "#9D5EF1", red crayola "#EF2D56", thulian pink "#E56399", cool green #AFD0BF
 
           accent: "#fdba74",
 
-          neutral: "#9EB3C2",
+          neutral: "#EDEBD7",
 
           "base-100": "#EDEBD7",
 
