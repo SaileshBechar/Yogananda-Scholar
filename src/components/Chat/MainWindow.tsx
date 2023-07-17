@@ -117,7 +117,7 @@ export const Chat: Component<{}> = () => {
   };
 
   return (
-    <main class="h-screen flex flex-col justify-end text-lg">
+    <main class="">
       <Show
         when={conversation().length > 0}
         fallback={<ChatWelcomeWindow buttonHandler={handleUserInput} />}
@@ -129,7 +129,7 @@ export const Chat: Component<{}> = () => {
           isWaitingForCompletion={isWaitingForCompletion}
         />
       </Show>
-      <div class="fixed flex flex-col w-full px-4 pt-4 bg-gradient-to-t from-base-100 from-50% ">
+      <div class="sticky sm:absolute left-0 bottom-0 flex-1 flex flex-col w-full px-4 pt-4 bg-gradient-to-t from-base-100 from-50% ">
         <div class="w-full flex gap-3.5 justify-center">
           <div class="join w-full max-w-3xl">
             <input
