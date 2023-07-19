@@ -8,7 +8,7 @@ const ChatBubbleWindow: Component<{
   chatboxRef: HTMLDivElement | undefined;
 }> = (props) => {
   return (
-    <div class="overflow-auto pb-[95px]" ref={props.chatboxRef}>
+    <div class="overflow-auto pb-[95px] max-w-3xl md:max-w-6xl m-auto" ref={props.chatboxRef}>
       <For each={props.conversation()}>
         {(bubble, index) => (
           <Show
