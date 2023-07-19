@@ -2,15 +2,14 @@ import { Component } from "solid-js";
 import ChatWelcomeColumn from "./WelcomeColumn";
 import { BsSun, BsBook } from "solid-icons/bs";
 import { IoWarningOutline } from "solid-icons/io";
-import ChatContextCollapse from "./ContextCollapse";
 
 const ChatWelcomeWindow: Component<{
   buttonHandler: (question: string) => Promise<void>;
 }> = (props) => {
   return (
-    <div class="overflow-hidden">
-      <div class="flex flex-col">
-        <div class="text-gray-800 w-full mx-auto md:max-w-2xl lg:max-w-3xl md:h-full md:flex md:flex-col px-6">
+    <div class="overflow-hidden pb-[80px]">
+      <div class="flex flex-col justify-start h-full">
+        <div class="w-full mx-auto md:max-w-2xl lg:max-w-3xl md:h-full md:flex md:flex-col px-6">
           <div class="text-4xl font-semibold text-center mt-6 sm:mt-[20vh] ml-auto mr-auto mb-10 sm:mb-16 flex gap-2 items-center justify-center">
             Yogananda Scholar
           </div>
@@ -45,7 +44,6 @@ const ChatWelcomeWindow: Component<{
             />
           </div>
         </div>
-        <div class="h-32 md:h-48 flex-shrink-0"></div>
       </div>
     </div>
   );
