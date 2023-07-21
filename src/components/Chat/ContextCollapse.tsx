@@ -2,19 +2,28 @@ import { Component, For } from "solid-js";
 import { Context } from "~/types";
 
 const ChatContextCollapse: Component<{ context: Context[] }> = (props) => {
-  const capitalizeTitle = (str: string): string => {
-    const minorWords = ["a", "an", "and", "as", "by", "for", "in", "of", "on", "or"];
-  
-    const words = str.toLowerCase().split(" ");
-  
-    const capitalizedWords = words.map((word, index) =>
-      (index === 0 || index === words.length - 1 || !minorWords.includes(word))
-        ? `${word.charAt(0).toUpperCase()}${word.slice(1)}`
-        : word
-    );
-  
+  const capitalizeTitle = (inputString: string): string => {
+    // Split the input string into an array of words
+    const words = inputString.toLowerCase().split(" ");
+
+    // Capitalize the first letter of each word and concatenate them back into a string
+    const capitalizedWords = words.map((word) => {
+      const firstChar = word.match(/[A-Za-z]/);
+      if (firstChar) {
+        const firstCharIndex = word.indexOf(firstChar[0]);
+        const firstPart = word.slice(0, firstCharIndex);
+        const restOfWord = word.slice(firstCharIndex);
+        return (
+          firstPart + restOfWord.charAt(0).toUpperCase() + restOfWord.slice(1)
+        );
+      } else {
+        return word;
+      }
+    });
+
+    // Join the capitalized words with spaces to form the final capitalized string
     const capitalizedString = capitalizedWords.join(" ");
-  
+
     return capitalizedString;
   };
 
