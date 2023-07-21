@@ -29,6 +29,8 @@ export async function concatonate_adjacent_paragraphs(
   context: Context[],
   num_paragraphs: number = 3
 ) {
+  const TOTAL_AVAILABLE_CHARS = 3500 * 4
+  const AVAILABLE_CHARS_PER_PARAGRAPH = TOTAL_AVAILABLE_CHARS / context.length
   const num_to_concat = Math.max(
     num_paragraphs,
     Math.round(context.length / 3)
@@ -41,7 +43,7 @@ export async function concatonate_adjacent_paragraphs(
         let below_paragraph_text = "";
         let adj_i = 1
         let paragraph_length = obj.paragraph_text.length
-        while (paragraph_length <= 1500 && adj_i < 20) {
+        while (paragraph_length <= AVAILABLE_CHARS_PER_PARAGRAPH && adj_i < 20) {
           const above_paragraph = await fetch_paragraph(
             supabase,
             (Number(obj.paragraph_id) + adj_i).toString()
