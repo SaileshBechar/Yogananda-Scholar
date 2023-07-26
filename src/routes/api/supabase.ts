@@ -29,49 +29,55 @@ export async function concatonate_adjacent_paragraphs(
   context: Context[],
   num_paragraphs: number = 3
 ) {
-  const TOTAL_AVAILABLE_CHARS = 3500 * 4
-  const AVAILABLE_CHARS_PER_PARAGRAPH = TOTAL_AVAILABLE_CHARS / context.length
+  const TOTAL_AVAILABLE_CHARS = 3500 * 4;
+  const AVAILABLE_CHARS_PER_PARAGRAPH = TOTAL_AVAILABLE_CHARS / context.length;
   const num_to_concat = Math.max(
     num_paragraphs,
     Math.round(context.length / 3)
   );
   const concatContext = await Promise.all(
     context
-      .filter((obj, index) => index >= num_to_concat || obj.paragraph_text.length <= 240)
+      .filter(
+        (obj, index) =>
+          index >= num_to_concat || obj.paragraph_text.length <= 240
+      )
       .map(async (obj) => {
         let above_paragraph_text = "";
         let below_paragraph_text = "";
-        let adj_i = 1
-        let paragraph_length = obj.paragraph_text.length
-        while (paragraph_length <= AVAILABLE_CHARS_PER_PARAGRAPH && adj_i < 20) {
+        let adj_i = 1;
+        let paragraph_length = obj.paragraph_text.length;
+        while (
+          paragraph_length <= AVAILABLE_CHARS_PER_PARAGRAPH &&
+          adj_i < 20
+        ) {
           const above_paragraph = await fetch_paragraph(
-            supabase,
-            (Number(obj.paragraph_id) + adj_i).toString()
-          );
-          if (above_paragraph.data) {
-            above_paragraph_text =
-              above_paragraph_text + " " + above_paragraph.data[0].paragraph_text;
-            paragraph_length += above_paragraph_text.length
-          }
-          const below_paragraph = await fetch_paragraph(
             supabase,
             (Number(obj.paragraph_id) - adj_i).toString()
           );
+          if (above_paragraph.data) {
+            above_paragraph_text =
+              above_paragraph.data[0].paragraph_text +
+              "\n\n " +
+              above_paragraph_text;
+            paragraph_length += above_paragraph_text.length;
+          }
+          const below_paragraph = await fetch_paragraph(
+            supabase,
+            (Number(obj.paragraph_id) + adj_i).toString()
+          );
           if (below_paragraph.data) {
             below_paragraph_text =
-              below_paragraph.data[0].paragraph_text + " " + below_paragraph_text;
-              paragraph_length += below_paragraph_text.length
+              below_paragraph_text +
+              "\n\n " +
+              below_paragraph.data[0].paragraph_text;
+            paragraph_length += below_paragraph_text.length;
           }
-          adj_i++
+          adj_i++;
         }
         return {
           ...obj,
           paragraph_text:
-            above_paragraph_text +
-            " " +
-            obj.paragraph_text +
-            " " +
-            below_paragraph_text,
+            above_paragraph_text + obj.paragraph_text + below_paragraph_text,
         };
       })
   );
@@ -121,7 +127,7 @@ export const fetch_paragraph = async (
 ) => {
   return await supabase
     .from("paragraphs")
-    .select("paragraph_text, chapter_id, chapters(chapter_id)") // join on chapters table
+    .select("paragraph_text, chapter_id, paragraph_id, chapters(chapter_id)") // join on chapters table
     .eq("paragraph_id", paragraph_id)
     .eq("chapters.chapter_name", "paragraphs.chapter_name")
     .limit(1);

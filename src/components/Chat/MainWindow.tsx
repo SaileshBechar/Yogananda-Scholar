@@ -146,6 +146,7 @@ export const Chat: Component<{}> = () => {
               class="btn btn-secondary w-16 p-2 join-item rounded-r-lg"
               onClick={() => handleUserInput(inputRef?.value as string)}
               disabled={isCompleting()}
+              data-testid="send-button"
             >
               <FaSolidArrowRight size={22} class="fill-secondary-content"/>
             </button>

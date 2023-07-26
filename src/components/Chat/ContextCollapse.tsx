@@ -37,7 +37,7 @@ const ChatContextCollapse: Component<{ context: Context[] }> = (props) => {
         <For each={props.context}>
           {(item) => (
             <div class="p-2 sm:p-10 rounded-lg my-4 bg-secondary text-secondary-content">
-              <div>{item.paragraph_text}</div>
+              <div class="whitespace-pre-line">{item.paragraph_text}</div>
               <div class="inline-flex justify-between gap-4 mt-4 w-full">
                 <div>{capitalizeTitle(item.chapter_name)}</div>
                 <div>

@@ -28,3 +28,6 @@ gitignore
 # System Files
 .DS_Store
 Thumbs.db
+/test-results/
+/playwright-report/
+/playwright/.cache/
