@@ -117,7 +117,7 @@ export const Chat: Component<{}> = () => {
   };
 
   return (
-    <main class="">
+    <main>
       <Show
         when={conversation().length > 0}
         fallback={<ChatWelcomeWindow buttonHandler={handleUserInput} />}

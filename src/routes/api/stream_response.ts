@@ -1,47 +1,35 @@
-import { APIEvent, json } from "solid-start";
+import { APIEvent } from "solid-start";
 import { LLMChain } from "langchain/chains";
 import { ChatOpenAI } from "langchain/chat_models/openai";
 import {
   ChatPromptTemplate,
   SystemMessagePromptTemplate,
-  HumanMessagePromptTemplate,
-  AIMessagePromptTemplate,
 } from "langchain/prompts";
 import {
-  BufferMemory,
   BufferWindowMemory,
   ChatMessageHistory,
 } from "langchain/memory";
 import {
-  HumanChatMessage,
-  AIChatMessage,
   BaseChatMessage,
 } from "langchain/schema";
 import { Context, Conversation } from "~/types";
 import {
   generate_base_chat_history,
-  generate_retrieval_query,
-  trimContext,
 } from "./vectordb";
-import {
-  concatonate_adjacent_paragraphs,
-  createSupabaseClient,
-  retrieve_texts,
-} from "./supabase";
 
 const stream_ai_response = (
   context: string,
   chatHistory: BaseChatMessage[]
 ) => {
-  const chat = new ChatOpenAI({ temperature: 0, streaming: true });
+  const chat = new ChatOpenAI({ temperature: 0, streaming: true, modelName: "gpt-4" });
   const chatPrompt = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(
       "You are a helpful scholar who will answer questions about Paramahansa Yogananda and his books. \
-You will provide an answer ONLY based on the text from books given in triple square brackets. \
+Provide a detailed, thourough and verbose answer ONLY based on the text from books given in triple square brackets. \
 Do not provide the book text source in your answer. \
 Students can refer to Paramahansa Yogananda as Guruji, Master, Mukunda or Gurudeva. \
 Please answer the student according to the name they used. \
-You can answer all scholarly questions, but if the student asks for advice, \
+If the question is not scholarly, is relating to council or you do not know the answer, \
 respond with 'Sorry, I can only answer scholarly questions, \
 please reach out to Mother Center for further council (www.yogananda.org).'\n\n\
 Text from books: [[[{context}]]]\n\n\n\nConversation History:\n{history}\nscholar:"

@@ -21,7 +21,7 @@ const ChatWelcomeWindow: Component<{
               buttonText={[
                 "Provide quotes on strength and overcoming obstacles",
                 "Where did Guruji first have a vision of the Mount Washington headquaters?",
-                "How did Guruji escape the conversation with the talkative friend in the perfume saint chapter?",
+                "Which metals are in an astrological bangle?",
               ]}
             />
             <ChatWelcomeColumn

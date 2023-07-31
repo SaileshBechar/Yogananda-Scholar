@@ -1,32 +1,32 @@
 import { Component, For } from "solid-js";
 import { Context } from "~/types";
 
+export const capitalizeTitle = (inputString: string): string => {
+  // Split the input string into an array of words
+  const words = inputString.toLowerCase().split(" ");
+
+  // Capitalize the first letter of each word and concatenate them back into a string
+  const capitalizedWords = words.map((word) => {
+    const firstChar = word.match(/[A-Za-z]/);
+    if (firstChar) {
+      const firstCharIndex = word.indexOf(firstChar[0]);
+      const firstPart = word.slice(0, firstCharIndex);
+      const restOfWord = word.slice(firstCharIndex);
+      return (
+        firstPart + restOfWord.charAt(0).toUpperCase() + restOfWord.slice(1)
+      );
+    } else {
+      return word;
+    }
+  });
+
+  // Join the capitalized words with spaces to form the final capitalized string
+  const capitalizedString = capitalizedWords.join(" ");
+
+  return capitalizedString;
+};
+
 const ChatContextCollapse: Component<{ context: Context[] }> = (props) => {
-  const capitalizeTitle = (inputString: string): string => {
-    // Split the input string into an array of words
-    const words = inputString.toLowerCase().split(" ");
-
-    // Capitalize the first letter of each word and concatenate them back into a string
-    const capitalizedWords = words.map((word) => {
-      const firstChar = word.match(/[A-Za-z]/);
-      if (firstChar) {
-        const firstCharIndex = word.indexOf(firstChar[0]);
-        const firstPart = word.slice(0, firstCharIndex);
-        const restOfWord = word.slice(firstCharIndex);
-        return (
-          firstPart + restOfWord.charAt(0).toUpperCase() + restOfWord.slice(1)
-        );
-      } else {
-        return word;
-      }
-    });
-
-    // Join the capitalized words with spaces to form the final capitalized string
-    const capitalizedString = capitalizedWords.join(" ");
-
-    return capitalizedString;
-  };
-
   return (
     <div
       tabindex="0"

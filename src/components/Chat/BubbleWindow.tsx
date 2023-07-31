@@ -8,7 +8,10 @@ const ChatBubbleWindow: Component<{
   chatboxRef: HTMLDivElement | undefined;
 }> = (props) => {
   return (
-    <div class="overflow-auto pb-[95px] max-w-3xl md:max-w-6xl m-auto" ref={props.chatboxRef}>
+    <div
+      class="overflow-auto pb-[95px] max-w-3xl md:max-w-6xl m-auto"
+      ref={props.chatboxRef}
+    >
       <For each={props.conversation()}>
         {(bubble, index) => (
           <Show
@@ -23,8 +26,8 @@ const ChatBubbleWindow: Component<{
           >
             <Show when={bubble.content.length > 0}>
               <div class="chat chat-start">
-                <div class="chat-bubble mt-10 flex flex-col gap-4 bg-secondary text-secondary-content">
-                  {bubble.content}
+                <div class="chat-bubble mt-10 flex flex-col gap-4 bg-secondary text-secondary-content whitespace-pre-line">
+                  <div class="p-4">{bubble.content}</div>
                   <Show
                     when={props.contextHistory()[(index() - 1) / 2].length > 0}
                   >
